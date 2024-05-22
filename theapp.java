@@ -44,39 +44,9 @@ public class theapp{
                     Element eElement = (Element) nNode;
                     JSONObject jsonObject = new JSONObject();
 
-                    if (selectedFields.contains("name")) {
-                        String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-                        jsonObject.put("name", name);
-                    }
-
-                    if (selectedFields.contains("postalZip")) {
-                        String postalZip = eElement.getElementsByTagName("postalZip").item(0).getTextContent();
-                        jsonObject.put("postalZip", postalZip);
-                    }
-
-                    if (selectedFields.contains("region")) {
-                        String region = eElement.getElementsByTagName("region").item(0).getTextContent();
-                        jsonObject.put("region", region);
-                    }
-
-                    if (selectedFields.contains("country")) {
-                        String country = eElement.getElementsByTagName("country").item(0).getTextContent();
-                        jsonObject.put("country", country);
-                    }
-
-                    if (selectedFields.contains("address")) {
-                        String address = eElement.getElementsByTagName("address").item(0).getTextContent();
-                        jsonObject.put("address", address);
-                    }
-
-                    if (selectedFields.contains("list")) {
-                        String listString = eElement.getElementsByTagName("list").item(0).getTextContent();
-                        String[] list = listString.isEmpty() ? new String[0] : listString.split(", ");
-                        JSONArray jsonList = new JSONArray();
-                        for (String item : list) {
-                            jsonList.put(item);
-                        }
-                        jsonObject.put("list", jsonList);
+                    for (String field : selectedFields) {
+                        String fieldValue = eElement.getElementsByTagName(field).item(0).getTextContent();
+                        jsonObject.put(field, fieldValue);
                     }
 
                     jsonArray.put(jsonObject);
