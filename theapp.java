@@ -1,9 +1,9 @@
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-import org.w3c.dom.Element;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Scanner;
@@ -12,6 +12,8 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 
 public class theapp{
+    private static JSONArray jsonArray; // Declare jsonArray as a class-level variable
+    private static String qName; // Declare qName as a class-level variable
 
     public static void main(String[] args) {
         // Define the available fields
@@ -26,32 +28,52 @@ public class theapp{
         // Get user-selected fields
         Set<String> selectedFields = getUserSelectedFields(availableFields);
 
+        // Initialize jsonArray
+        jsonArray = new JSONArray();
+
         try {
             File inputFile = new File("data.xml"); // specify the path to your XML file
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(inputFile);
-            doc.getDocumentElement().normalize();
 
-            NodeList nList = doc.getElementsByTagName("record");
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser saxParser = factory.newSAXParser();
 
-            JSONArray jsonArray = new JSONArray();
+            // Create a handler for SAX events
+            DefaultHandler handler = new DefaultHandler() {
+                boolean inRecord = false;
+                JSONObject jsonObject = null;
 
-            for (int temp = 0; temp < nList.getLength(); temp++) {
-                Node nNode = nList.item(temp);
-
-                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-                    Element eElement = (Element) nNode;
-                    JSONObject jsonObject = new JSONObject();
-
-                    for (String field : selectedFields) {
-                        String fieldValue = eElement.getElementsByTagName(field).item(0).getTextContent();
-                        jsonObject.put(field, fieldValue);
+                public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+                    if (qName.equalsIgnoreCase("record")) {
+                        inRecord = true;
+                        jsonObject = new JSONObject();
                     }
-
-                    jsonArray.put(jsonObject);
+                    XMLParser.qName = qName; // Assign qName value
                 }
-            }
+
+                public void endElement(String uri, String localName, String qName) throws SAXException {
+                    if (qName.equalsIgnoreCase("record")) {
+                        inRecord = false;
+                        if (jsonObject != null) {
+                            jsonArray.put(jsonObject);
+                        }
+                    }
+                }
+
+                public void characters(char ch[], int start, int length) throws SAXException {
+                    if (inRecord) {
+                        String data = new String(ch, start, length).trim();
+                        if (data.length() > 0) {
+                            String fieldName = XMLParser.qName.toLowerCase(); // Use class-level qName
+                            if (selectedFields.contains(fieldName)) {
+                                jsonObject.put(fieldName, data);
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Parse the XML file using the handler
+            saxParser.parse(inputFile, handler);
 
             // Print the JSON array
             System.out.println(jsonArray.toString(4));
@@ -83,4 +105,7 @@ public class theapp{
         return selectedFields;
     }
 }
+
+
+
 
