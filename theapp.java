@@ -8,6 +8,8 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 public class theapp{
 
@@ -20,7 +22,7 @@ public class theapp{
         availableFields.add("country");
         availableFields.add("address");
         availableFields.add("list");
-        
+
         // Get user-selected fields
         Set<String> selectedFields = getUserSelectedFields(availableFields);
 
@@ -30,54 +32,60 @@ public class theapp{
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(inputFile);
             doc.getDocumentElement().normalize();
-            
-            System.out.println("Root element: " + doc.getDocumentElement().getNodeName());
+
             NodeList nList = doc.getElementsByTagName("record");
-            
+
+            JSONArray jsonArray = new JSONArray();
+
             for (int temp = 0; temp < nList.getLength(); temp++) {
                 Node nNode = nList.item(temp);
-                
+
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                     Element eElement = (Element) nNode;
+                    JSONObject jsonObject = new JSONObject();
 
                     if (selectedFields.contains("name")) {
                         String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-                        System.out.println("Name: " + name);
+                        jsonObject.put("name", name);
                     }
 
                     if (selectedFields.contains("postalZip")) {
                         String postalZip = eElement.getElementsByTagName("postalZip").item(0).getTextContent();
-                        System.out.println("Postal/Zip: " + postalZip);
+                        jsonObject.put("postalZip", postalZip);
                     }
 
                     if (selectedFields.contains("region")) {
                         String region = eElement.getElementsByTagName("region").item(0).getTextContent();
-                        System.out.println("Region: " + region);
+                        jsonObject.put("region", region);
                     }
 
                     if (selectedFields.contains("country")) {
                         String country = eElement.getElementsByTagName("country").item(0).getTextContent();
-                        System.out.println("Country: " + country);
+                        jsonObject.put("country", country);
                     }
 
                     if (selectedFields.contains("address")) {
                         String address = eElement.getElementsByTagName("address").item(0).getTextContent();
-                        System.out.println("Address: " + address);
+                        jsonObject.put("address", address);
                     }
 
                     if (selectedFields.contains("list")) {
                         String listString = eElement.getElementsByTagName("list").item(0).getTextContent();
                         String[] list = listString.isEmpty() ? new String[0] : listString.split(", ");
-                        System.out.print("List: ");
+                        JSONArray jsonList = new JSONArray();
                         for (String item : list) {
-                            System.out.print(item + " ");
+                            jsonList.put(item);
                         }
-                        System.out.println();
+                        jsonObject.put("list", jsonList);
                     }
 
-                    System.out.println();
+                    jsonArray.put(jsonObject);
                 }
             }
+
+            // Print the JSON array
+            System.out.println(jsonArray.toString(4));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -86,12 +94,12 @@ public class theapp{
     private static Set<String> getUserSelectedFields(Set<String> availableFields) {
         Set<String> selectedFields = new HashSet<>();
         Scanner scanner = new Scanner(System.in);
-        
+
         System.out.println("Available fields: " + availableFields);
         System.out.println("Enter the fields you want to display, separated by commas:");
         String input = scanner.nextLine();
         scanner.close();
-        
+
         String[] fields = input.split(",");
         for (String field : fields) {
             field = field.trim();
@@ -101,7 +109,8 @@ public class theapp{
                 System.out.println("Invalid field: " + field);
             }
         }
-        
+
         return selectedFields;
     }
 }
+
